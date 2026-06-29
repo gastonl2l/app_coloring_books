@@ -275,7 +275,7 @@ reset_email = st.text_input("Email do resetu", key="reset_email")
 if st.button("Wyślij link resetujący"):
 
     try:
-        supabase.auth.reset_password_email(reset_email),
+        supabase.auth.reset_password_email(reset_email)
         st.success("Link resetujący został wysłany na email.")
 
         
