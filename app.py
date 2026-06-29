@@ -1,7 +1,8 @@
 import streamlit as st
 from openai import OpenAI
 #from dotenv import dotenv_values
-#import os
+from supabase import create_client
+import os
 import json
 import base64
 import uuid
@@ -24,7 +25,8 @@ st.set_page_config(
 )
 
 
-
+if not st.session_state.get("user"):
+    st.stop()
 
 # ---------------------------------------------------
 # CSS
@@ -149,6 +151,12 @@ if not st.session_state.get("openai_api_key"):
 # Inicjalizacja Klienta
 openai_client = OpenAI(api_key=st.session_state["openai_api_key"])
 
+# initializacja supabase
+supabase = create_client(
+    st.secrets["SUPABASE_URL"],
+    st.secrets["SUPABASE_ANON_KEY"]
+)
+
 
 # ---------------------------------------------------
 # SESSION STATE
@@ -156,6 +164,9 @@ openai_client = OpenAI(api_key=st.session_state["openai_api_key"])
 
 if "prompts" not in st.session_state:
     st.session_state.prompts = []
+
+if "user" not in st.session_state:
+    st.session_state.user = None
 
 if "generated_images" not in st.session_state:
     st.session_state.generated_images = []
@@ -175,8 +186,8 @@ if "last_selected" not in st.session_state:
 if "generated_titles" not in st.session_state:
     st.session_state.generated_titles = set()
 
-if "history" not in st.session_state:
-    st.session_state.history = []
+# if "history" not in st.session_state:
+#     st.session_state.history = []
 
 # if "history" not in st.session_state:
 
@@ -191,6 +202,98 @@ if "history" not in st.session_state:
 if "confirm_delete_history" not in st.session_state:
     st.session_state.confirm_delete_history = False
 
+
+if "history" not in st.session_state:
+
+    if st.session_state.get("user"):
+        try:
+            response = (
+                supabase.table("history")
+                .select("*")
+                .eq("user_id", st.session_state.user.id)
+                .order("id", desc=True)
+                .limit(30)
+                .execute()
+            )
+
+            st.session_state.history = response.data or []
+
+        except Exception as e:
+            st.session_state.history = []
+            st.error(f"Błąd odczytu historii: {e}")
+
+    else:
+        st.session_state.history = []
+
+
+# Log in
+if not st.session_state.user:
+
+    st.title("Login")
+
+    email = st.text_input("Email")
+    password = st.text_input("Hasło", type="password")
+
+    if st.button("Zaloguj"):
+
+        try:
+            response = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password,
+            })
+
+            st.session_state.user = response.session.user
+
+            st.success("Zalogowano!")
+            st.rerun()
+
+        except Exception as e:
+            st.error("Błąd logowania")
+
+# log Out
+if st.sidebar.button("Logout"):
+    supabase.auth.sign_out()
+    st.session_state.user = None
+    st.rerun()
+
+# reset hasła
+st.subheader("🔑 Reset hasła")
+
+reset_email = st.text_input("Email do resetu", key="reset_email")
+
+if st.button("Wyślij link resetujący"):
+
+    try:
+        supabase.auth.reset_password_email(reset_email),
+        st.success("Link resetujący został wysłany na email.")
+
+        
+
+    except Exception as e:
+        st.error(f"Błąd resetu hasła: {e}")
+
+
+
+# rejestracja
+st.subheader("🆕 Rejestracja")
+
+new_email = st.text_input("Nowy email", key="reg_email")
+new_password = st.text_input("Nowe hasło", type="password", key="reg_pass")
+
+if st.button("Utwórz konto"):
+
+    try:
+        response = supabase.auth.sign_up({
+            "email": new_email,
+            "password": new_password
+        })
+
+        st.success("Konto utworzone! Sprawdź email i potwierdź rejestrację.")
+
+    except Exception as e:
+        st.error(f"Błąd rejestracji: {e}")
+st.success("Konto utworzone! Sprawdź email i potwierdź rejestrację.")
+st.info("Po potwierdzeniu możesz się zalogować.")
 
 
 #wyszukiwarka pomyłów
@@ -280,14 +383,20 @@ with st.sidebar:
     st.divider()
 
     # Historia
-    history_option = st.selectbox(
-    "📚 Historia Wyszukiwania",
-    ["Wszystko"] +
-    [
-        f"{i}|{item['theme']}"
-        for i, item in enumerate(st.session_state.history)
-    ]
-)
+    if st.session_state.get("user") and st.session_state.get("history"):
+
+        history_option = st.selectbox(
+            "📚 Historia Wyszukiwania",
+            ["Wszystko"] +
+            [
+                f"{i}|{item.get('theme', 'brak')}"
+                for i, item in enumerate(st.session_state.history)
+            ]
+        )
+
+    else:
+        st.info("Zaloguj się, aby zobaczyć historię")
+        history_option = "Wszystko"
 
 # ---------------------------------------------------
 # STYLE i poziom KOLOROWANEK
@@ -523,20 +632,26 @@ High quality.
 
                     request_cost += IMAGE_COST
                     #base64
-                    image_base64 = image.data[0].b64_json
+                    
+                    image_bytes = base64.b64decode(image.data[0].b64_json)
 
-                    #zapisz PGN do pliku
-                    # file_name = f"{uuid.uuid4()}.png"
-                    # file_path = os.path.join(session_folder, file_name)
+                    file_name = f"{uuid.uuid4()}.png"
 
-                    # with open(file_path, "wb") as f:
-                    #     f.write(base64.b64decode(image_base64))
+                    supabase.storage.from_("images").upload(
+                        file_name,
+                        image_bytes,
+                        file_options={"content-type": "image/png"}
+                    )
+
+                    public_url = supabase.storage.from_("images").get_public_url(file_name)
 
                     image_data = {
                         "id": str(uuid.uuid4()),
                         "title": idea,
-                        "base64": image_base64
+                        "url": public_url
                     }
+
+
 
                     st.session_state.generated_images.append(image_data)
                     session_images.append(image_data.copy())
@@ -566,21 +681,36 @@ High quality.
 
         if session_images:
 
-            st.session_state.history.append(
-                {
-                    "theme": theme,
-                    "level": level,
-                    "style": style,
-                    "date": datetime.now().strftime("%d.%m.%Y %H:%M"),
-                    #"session_id": session_id,
-                    "images": session_images
-                }
-            )
+            history_item = {
+                "user_id": st.session_state.user.id,
+                "theme": theme,
+                "level": level,
+                "style": style,
+                "date": datetime.now().strftime("%d.%m.%Y %H:%M"),
+                "images": session_images
+            }
 
-            MAX_HISTORY = 15
+            try:
+                response = (
+                    supabase.table("history")
+                    .insert(history_item)
+                    .execute()
+                )
 
-            if len(st.session_state.history) > MAX_HISTORY:
-                st.session_state.history = st.session_state.history[-MAX_HISTORY:]
+                # zapisz ID zwrócone przez Supabase
+                history_item["id"] = response.data[0]["id"]
+
+                # dopiero teraz dodaj do Session State
+                st.session_state.history.append(history_item)
+
+            except Exception as e:
+                st.error(f"Błąd zapisu historii: {e}")
+
+
+            # MAX_HISTORY = 15
+
+            # if len(st.session_state.history) > MAX_HISTORY:
+            #     st.session_state.history = st.session_state.history[-MAX_HISTORY:]
 
             #save_history(st.session_state.history)
 
@@ -615,31 +745,45 @@ if st.session_state.generated_images:
 
             
 
-            if st.button("❌", key=f"del_{img['id']}"):
+            if st.button("❌", key=f"del_{img['id']}_main"):
 
+                # usuń z aktualnych obrazów
                 st.session_state.generated_images = [
                     x for x in st.session_state.generated_images
                     if x["id"] != img["id"]
                 ]
 
+                # znajdź i zaktualizuj tylko jedną sesję
                 for session in st.session_state.history:
-                    session["images"] = [
-                        x for x in session["images"]
-                        if x["id"] != img["id"]
-                    ]
 
-                st.session_state.history = [
-                    session
-                    for session in st.session_state.history
-                    if len(session["images"]) > 0
-                ]
+                    # sprawdzamy czy obraz jest w tej sesji
+                    if any(x["id"] == img["id"] for x in session["images"]):
 
+                        # usuń obraz z sesji
+                        session["images"] = [
+                            x for x in session["images"]
+                            if x["id"] != img["id"]
+                        ]
+
+                        # jeśli sesja pusta -> usuń z bazy
+                        if len(session["images"]) == 0:
+
+                            supabase.table("history") \
+                                .delete() \
+                                .eq("id", session["id"]) \
+                                .execute()
+
+                        else:
+
+                            supabase.table("history") \
+                                .update({"images": session["images"]}) \
+                                .eq("id", session["id"]) \
+                                .execute()
+
+                        break  # <- WAŻNE: kończymy po znalezieniu
+
+                # usuń tytuł
                 st.session_state.generated_titles.discard(img["title"])
-
-                #save_history(st.session_state.history)
-
-                    # if os.path.exists(img["file"]):
-                    #     os.remove(img["file"])
 
                 st.rerun()
 
@@ -707,6 +851,8 @@ if st.session_state.get("confirm_delete_history", False):
                 #shutil.rmtree("history")
 
             #os.makedirs("history", exist_ok=True)
+
+            supabase.table("history").delete().neq("id", 0).execute()
 
             st.session_state.history = []
             st.session_state.generated_images = []
