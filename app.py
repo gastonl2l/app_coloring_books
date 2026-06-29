@@ -9,14 +9,6 @@ import uuid
 from datetime import datetime
 #import shutil
 
-
-st.write("APP STARTED")
-
-
-#
-#os.makedirs("history", exist_ok=True)
-
-
 # ---------------------------------------------------
 # CONFIG
 # ---------------------------------------------------
@@ -27,6 +19,16 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+#debug
+st.write("APP STARTED")
+
+
+#
+#os.makedirs("history", exist_ok=True)
+
+
+
 
 
 if not st.session_state.get("user"):
