@@ -1,4 +1,9 @@
 import streamlit as st
+
+st.write("STEP 1 OK")
+st.write(st.session_state)
+
+
 from openai import OpenAI
 #from dotenv import dotenv_values
 from supabase import create_client
@@ -31,8 +36,8 @@ st.write("APP STARTED")
 
 
 
-if not st.session_state.get("user"):
-    st.stop()
+# if not st.session_state.get("user"):
+#     st.stop()
 
 # ---------------------------------------------------
 # CSS
