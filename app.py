@@ -36,8 +36,13 @@ st.write("APP STARTED")
 
 
 
-# if not st.session_state.get("user"):
-#     st.stop()
+# user = st.session_state.get("user")
+
+# if not user:
+#     show_auth()
+# else:
+#     show_app()
+
 
 # ---------------------------------------------------
 # CSS
@@ -214,7 +219,7 @@ if "confirm_delete_history" not in st.session_state:
     st.session_state.confirm_delete_history = False
 
 
-user = st.session_state.get("user")
+# user = st.session_state.get("user")
 
 if "history" not in st.session_state:
 
@@ -243,26 +248,46 @@ if "history" not in st.session_state:
 
 
 # Log in
-if not st.session_state.get("user"):
+user = st.session_state.get("user")
 
-    st.title("Login")
+if not user:
 
-    email = st.text_input("Email")
-    password = st.text_input("Hasło", type="password")
+    st.title("🔐 Login / Rejestracja")
 
-    if st.button("Zaloguj"):
+    tab1, tab2 = st.tabs(["Login", "Rejestracja"])
 
-        try:
-            response = supabase.auth.sign_in_with_password({
-                "email": email,
-                "password": password
-            })
+    with tab1:
+        email = st.text_input("Email")
+        password = st.text_input("Hasło", type="password")
 
-            st.session_state.user = response.user
-            st.rerun()
+        if st.button("Zaloguj"):
+            try:
+                response = supabase.auth.sign_in_with_password({
+                    "email": email,
+                    "password": password
+                })
 
-        except Exception as e:
-            st.error("Błąd logowania")
+                st.session_state.user = response.user
+                st.rerun()
+
+            except Exception as e:
+                st.error("Błąd logowania")
+
+    with tab2:
+        new_email = st.text_input("Nowy email", key="reg_email")
+        new_password = st.text_input("Nowe hasło", type="password", key="reg_pass")
+
+        if st.button("Utwórz konto"):
+            try:
+                supabase.auth.sign_up({
+                    "email": new_email,
+                    "password": new_password
+                })
+
+                st.success("Konto utworzone! Sprawdź email.")
+
+            except Exception as e:
+                st.error(f"Błąd rejestracji: {e}")
 
     st.stop()
 
@@ -272,44 +297,25 @@ if st.sidebar.button("Logout"):
     st.session_state.user = None
     st.rerun()
 
-# reset hasła
-st.subheader("🔑 Reset hasła")
+# # reset hasła
+# st.subheader("🔑 Reset hasła")
 
-reset_email = st.text_input("Email do resetu", key="reset_email")
+# reset_email = st.text_input("Email do resetu", key="reset_email")
 
-if st.button("Wyślij link resetujący"):
+# if st.button("Wyślij link resetujący"):
 
-    try:
-        supabase.auth.reset_password_email(reset_email)
-        st.success("Link resetujący został wysłany na email.")
+#     try:
+#         supabase.auth.reset_password_email(reset_email)
+#         st.success("Link resetujący został wysłany na email.")
 
         
 
-    except Exception as e:
-        st.error(f"Błąd resetu hasła: {e}")
+#     except Exception as e:
+#         st.error(f"Błąd resetu hasła: {e}")
 
 
 
-# rejestracja
-st.subheader("🆕 Rejestracja")
 
-new_email = st.text_input("Nowy email", key="reg_email")
-new_password = st.text_input("Nowe hasło", type="password", key="reg_pass")
-
-if st.button("Utwórz konto"):
-
-    try:
-        response = supabase.auth.sign_up({
-            "email": new_email,
-            "password": new_password
-        })
-
-        st.success("Konto utworzone! Sprawdź email i potwierdź rejestrację.")
-
-    except Exception as e:
-        st.error(f"Błąd rejestracji: {e}")
-st.success("Konto utworzone! Sprawdź email i potwierdź rejestrację.")
-st.info("Po potwierdzeniu możesz się zalogować.")
 
 
 #wyszukiwarka pomyłów
@@ -361,8 +367,21 @@ st.divider()
 # ---------------------------------------------------
 # SIDEBAR
 # ---------------------------------------------------
-
 with st.sidebar:
+
+    st.subheader("🔑 Reset hasła")
+
+    reset_email = st.text_input("Email do resetu", key="reset_email")
+
+    if st.button("Wyślij link resetujący"):
+        try:
+            supabase.auth.reset_password_email(reset_email)
+            st.success("Link resetujący wysłany!")
+        except Exception as e:
+            st.error(f"Błąd: {e}")
+
+
+
 
     #info
     
