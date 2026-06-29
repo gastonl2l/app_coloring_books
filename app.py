@@ -9,6 +9,10 @@ import uuid
 from datetime import datetime
 #import shutil
 
+
+st.write("APP STARTED")
+
+
 #
 #os.makedirs("history", exist_ok=True)
 
@@ -207,7 +211,10 @@ user = st.session_state.get("user")
 
 if "history" not in st.session_state:
 
-    if user and hasattr(user, "id"):
+    user = st.session_state.get("user")
+
+    if user and getattr(user, "id", None):
+
         try:
             response = (
                 supabase.table("history")
@@ -229,7 +236,7 @@ if "history" not in st.session_state:
 
 
 # Log in
-if not st.session_state.user:
+if not st.session_state.get("user"):
 
     st.title("Login")
 
@@ -241,16 +248,16 @@ if not st.session_state.user:
         try:
             response = supabase.auth.sign_in_with_password({
                 "email": email,
-                "password": password,
+                "password": password
             })
 
             st.session_state.user = response.user
-
-            st.success("Zalogowano!")
             st.rerun()
 
         except Exception as e:
             st.error("Błąd logowania")
+
+    st.stop()
 
 # log Out
 if st.sidebar.button("Logout"):
