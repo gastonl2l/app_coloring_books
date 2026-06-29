@@ -203,14 +203,16 @@ if "confirm_delete_history" not in st.session_state:
     st.session_state.confirm_delete_history = False
 
 
+user = st.session_state.get("user")
+
 if "history" not in st.session_state:
 
-    if st.session_state.get("user"):
+    if user and hasattr(user, "id"):
         try:
             response = (
                 supabase.table("history")
                 .select("*")
-                .eq("user_id", st.session_state.user.id)
+                .eq("user_id", user.id)
                 .order("id", desc=True)
                 .limit(30)
                 .execute()
