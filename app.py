@@ -244,7 +244,7 @@ if not st.session_state.user:
                 "password": password,
             })
 
-            st.session_state.user = response.session.user
+            st.session_state.user = response.user
 
             st.success("Zalogowano!")
             st.rerun()
