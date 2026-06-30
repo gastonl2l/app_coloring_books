@@ -262,12 +262,15 @@ if not user:
 
         if st.button("Zaloguj"):
             try:
-                response = supabase.auth.sign_up({
+                response = supabase.auth.sign_in_with_password({
                     "email": email,
                     "password": password
                 })
 
                 st.session_state.user = response.user
+                #debug
+                st.write(response.session)
+                st.write(response.user)
                 st.rerun()
 
             except Exception as e:
