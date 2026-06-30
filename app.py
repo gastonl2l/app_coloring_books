@@ -727,7 +727,7 @@ High quality.
                 "theme": theme,
                 "level": level,
                 "style": style,
-                "date": datetime.now().strftime("%d.%m.%Y %H:%M"),
+                "created_at": datetime.now().isoformat(),
                 "images": session_images
             }
 
