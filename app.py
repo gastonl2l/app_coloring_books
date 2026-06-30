@@ -6,7 +6,7 @@ st.write(st.session_state)
 
 from openai import OpenAI
 #from dotenv import dotenv_values
-from supabase import create_client
+from supabase import create_client, Client
 import os
 import json
 import base64
@@ -168,7 +168,7 @@ if not st.session_state.get("openai_api_key"):
 openai_client = OpenAI(api_key=st.session_state["openai_api_key"])
 
 # initializacja supabase
-supabase = create_client(
+supabase: Client = create_client(
     st.secrets["SUPABASE_URL"],
     st.secrets["SUPABASE_ANON_KEY"]
 )
@@ -268,9 +268,12 @@ if not user:
                 })
 
                 st.session_state.user = response.user
-                #debug
-                st.write(response.session)
-                st.write(response.user)
+
+                supabase.auth.set_session(
+                    response.session.access_token,
+                    response.session.refresh_token
+                )
+
                 st.rerun()
 
             except Exception as e:
