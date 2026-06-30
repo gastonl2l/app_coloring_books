@@ -262,7 +262,7 @@ if not user:
 
         if st.button("Zaloguj"):
             try:
-                response = supabase.auth.sign_in_with_password({
+                response = supabase.auth.sign_up({
                     "email": email,
                     "password": password
                 })
