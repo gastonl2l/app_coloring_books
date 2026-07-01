@@ -269,6 +269,8 @@ if not user:
                     "password": password
                 })
 
+                st.write(response)
+
                 st.session_state.user = response.user
 
                 supabase.auth.set_session(
@@ -300,7 +302,7 @@ if not user:
     st.stop()
 
 
-st.write(response)
+
 
 # log Out
 if st.sidebar.button("Logout"):
