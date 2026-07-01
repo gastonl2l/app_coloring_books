@@ -3,17 +3,18 @@ import streamlit as st
 st.write("STEP 1 OK")
 st.write(st.session_state)
 
-
+import supabase
 from openai import OpenAI
 #from dotenv import dotenv_values
 from supabase import create_client, Client
-st.write("Supabase version:", supabase.__version__)
+
 import os
 import json
 import base64
 import uuid
 from datetime import datetime
 #import shutil
+st.write("Supabase version:", supabase.__version__)
 
 # ---------------------------------------------------
 # CONFIG
