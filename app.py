@@ -299,6 +299,9 @@ if not user:
 
     st.stop()
 
+
+st.write(response)
+
 # log Out
 if st.sidebar.button("Logout"):
     supabase.auth.sign_out()
@@ -723,6 +726,8 @@ High quality.
         
 
         if session_images:
+
+            st.write("Current user:", supabase.auth.get_user())
 
             history_item = {
                 "user_id": st.session_state.user.id,
