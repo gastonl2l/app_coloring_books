@@ -185,12 +185,15 @@ def get_supabase():
     return client
 
 # initializacja supabase
-supabase = create_client(
-    st.secrets["SUPABASE_URL"],
-    st.secrets["SUPABASE_ANON_KEY"]
-)
+# supabase = create_client(
+#     st.secrets["SUPABASE_URL"],
+#     st.secrets["SUPABASE_ANON_KEY"]
+# )
 
-st.write("Current user:", supabase.auth.get_user())
+if st.session_state.get("access_token"):
+    st.write("Current user:", supabase.auth.get_user())
+else:
+    st.write("Current user: None")
 
 
 # ---------------------------------------------------
