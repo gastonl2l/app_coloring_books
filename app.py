@@ -7,6 +7,7 @@ st.write(st.session_state)
 from openai import OpenAI
 #from dotenv import dotenv_values
 from supabase import create_client, Client
+st.write("Supabase version:", supabase.__version__)
 import os
 import json
 import base64
