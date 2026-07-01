@@ -173,6 +173,8 @@ supabase: Client = create_client(
     st.secrets["SUPABASE_ANON_KEY"]
 )
 
+st.write("Current user:", supabase.auth.get_user())
+
 
 # ---------------------------------------------------
 # SESSION STATE
