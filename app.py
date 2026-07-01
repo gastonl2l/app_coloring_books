@@ -291,7 +291,7 @@ if not user:
 
                 st.write(response)
 
-                st.session_state.user = response.session.user
+                st.session_state.user = response.user
                 st.session_state["access_token"] = response.session.access_token
                 st.session_state["refresh_token"] = response.session.refresh_token
 
