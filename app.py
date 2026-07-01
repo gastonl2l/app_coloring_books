@@ -289,21 +289,21 @@ if not user:
                     "password": password
                 })
 
+                st.write("LOGIN RESPONSE")
                 st.write(response)
 
                 st.session_state.user = response.user
                 st.session_state["access_token"] = response.session.access_token
                 st.session_state["refresh_token"] = response.session.refresh_token
 
-                supabase.auth.set_session(
-                    response.session.access_token,
-                    response.session.refresh_token
-                )
+                st.success("Zalogowano!")
 
                 st.rerun()
 
             except Exception as e:
-                st.error("Błąd logowania")
+                st.exception(e)
+
+
 
     with tab2:
         new_email = st.text_input("Nowy email", key="reg_email")
