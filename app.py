@@ -185,7 +185,7 @@ def get_supabase():
     return client
 
 # initializacja supabase
-supabase: Client = create_client(
+supabase = create_client(
     st.secrets["SUPABASE_URL"],
     st.secrets["SUPABASE_ANON_KEY"]
 )
@@ -748,7 +748,7 @@ High quality.
 
         if session_images:
 
-            st.write("Current user:", supabase.auth.get_user())
+            st.write("Current user:", st.session_state.get("user"))
 
             history_item = {
                 "user_id": st.session_state.user.id,
