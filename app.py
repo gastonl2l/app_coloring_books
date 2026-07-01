@@ -3,7 +3,7 @@ import streamlit as st
 st.write("STEP 1 OK")
 st.write(st.session_state)
 
-import supabase
+
 from openai import OpenAI
 #from dotenv import dotenv_values
 from supabase import create_client, Client
@@ -13,8 +13,7 @@ import json
 import base64
 import uuid
 from datetime import datetime
-#import shutil
-st.write("Supabase version:", supabase.__version__)
+
 
 # ---------------------------------------------------
 # CONFIG
@@ -185,15 +184,16 @@ def get_supabase():
     return client
 
 # initializacja supabase
-# supabase = create_client(
-#     st.secrets["SUPABASE_URL"],
-#     st.secrets["SUPABASE_ANON_KEY"]
-# )
+supabase = get_supabase()
 
 if st.session_state.get("access_token"):
     st.write("Current user:", supabase.auth.get_user())
 else:
     st.write("Current user: None")
+
+
+
+
 
 
 # ---------------------------------------------------
@@ -251,7 +251,7 @@ if "history" not in st.session_state:
 
         try:
             response = (
-                supabase.table("history")
+                supabase_client.table("history")
                 .select("*")
                 .eq("user_id", user.id)
                 .order("id", desc=True)
@@ -284,7 +284,7 @@ if not user:
 
         if st.button("Zaloguj"):
             try:
-                response = supabase.auth.sign_in_with_password({
+                response = supabase_client.auth.sign_in_with_password({
                     "email": email,
                     "password": password
                 })
@@ -311,7 +311,7 @@ if not user:
 
         if st.button("Utwórz konto"):
             try:
-                supabase.auth.sign_up({
+                supabase_client.auth.sign_up({
                     "email": new_email,
                     "password": new_password
                 })
@@ -328,7 +328,7 @@ if not user:
 
 # log Out
 if st.sidebar.button("Logout"):
-    supabase.auth.sign_out()
+    supabase_client.auth.sign_out()
     st.session_state.user = None
     st.rerun()
 
@@ -410,7 +410,7 @@ with st.sidebar:
 
     if st.button("Wyślij link resetujący"):
         try:
-            supabase.auth.reset_password_email(reset_email)
+            supabase_client.auth.reset_password_email(reset_email)
             st.success("Link resetujący wysłany!")
         except Exception as e:
             st.error(f"Błąd: {e}")
@@ -707,13 +707,13 @@ High quality.
 
                     file_name = f"{uuid.uuid4()}.png"
 
-                    supabase.storage.from_("images").upload(
+                    supabase_client.storage.from_("images").upload(
                         file_name,
                         image_bytes,
                         file_options={"content-type": "image/png"}
                     )
 
-                    public_url = supabase.storage.from_("images").get_public_url(file_name)
+                    public_url = supabase_client.storage.from_("images").get_public_url(file_name)
 
                     image_data = {
                         "id": str(uuid.uuid4()),
@@ -764,7 +764,7 @@ High quality.
 
             try:
                 response = (
-                    supabase.table("history")
+                    supabase_client.table("history")
                     .insert(history_item)
                     .execute()
                 )
@@ -840,14 +840,14 @@ if st.session_state.generated_images:
                         # jeśli sesja pusta -> usuń z bazy
                         if len(session["images"]) == 0:
 
-                            supabase.table("history") \
+                            supabase_client.table("history") \
                                 .delete() \
                                 .eq("id", session["id"]) \
                                 .execute()
 
                         else:
 
-                            supabase.table("history") \
+                            supabase_client.table("history") \
                                 .update({"images": session["images"]}) \
                                 .eq("id", session["id"]) \
                                 .execute()
@@ -924,7 +924,7 @@ if st.session_state.get("confirm_delete_history", False):
 
             #os.makedirs("history", exist_ok=True)
 
-            supabase.table("history").delete().neq("id", 0).execute()
+            supabase_client.table("history").delete().neq("id", 0).execute()
 
             st.session_state.history = []
             st.session_state.generated_images = []
