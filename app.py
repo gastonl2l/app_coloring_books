@@ -169,6 +169,21 @@ if not st.session_state.get("openai_api_key"):
 # Inicjalizacja Klienta
 openai_client = OpenAI(api_key=st.session_state["openai_api_key"])
 
+# supabase
+def get_supabase():
+    client = create_client(
+        st.secrets["SUPABASE_URL"],
+        st.secrets["SUPABASE_ANON_KEY"]
+    )
+
+    if st.session_state.get("access_token"):
+        client.auth.set_session(
+            st.session_state["access_token"],
+            st.session_state["refresh_token"]
+        )
+
+    return client
+
 # initializacja supabase
 supabase: Client = create_client(
     st.secrets["SUPABASE_URL"],
@@ -273,7 +288,9 @@ if not user:
 
                 st.write(response)
 
-                st.session_state.user = response.user
+                st.session_state.user = response.session.user
+                st.session_state["access_token"] = response.session.access_token
+                st.session_state["refresh_token"] = response.session.refresh_token
 
                 supabase.auth.set_session(
                     response.session.access_token,
